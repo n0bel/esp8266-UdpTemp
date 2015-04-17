@@ -11,7 +11,8 @@ the device to recover from deep sleep mode.
 
 Typical serial output (every 2 minutes)
 
-`started
+```
+started
 press return to configure wifi.
 unless you've configured it once already.
 WiFi connecting...1...
@@ -23,13 +24,14 @@ bcast: 172.30.1.255
 espconn_create result = 0
 28ae3d1b03000071:+29.62
 deep_sleep
-`
+```
 
 
 
 Very Very stupid configuration example
 
-`started
+```
+started
 press return to configure wifi.
 unless you've configured it once already.
 
@@ -53,4 +55,4 @@ bcast: 172.30.1.255
 espconn_create result = 0
 28ae3d1b03000071:+28.0
 deep_sleep
-`
+```
