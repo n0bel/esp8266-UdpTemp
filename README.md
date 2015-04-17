@@ -34,7 +34,9 @@ Very Very stupid configuration example
 started
 press return to configure wifi.
 unless you've configured it once already.
-
+```
+(i pressed return)
+```
 got line 
 press return again to configure wifi
 
