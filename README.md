@@ -4,7 +4,7 @@ Reads #ds18b20s and broadcasts the ID and Temperature via UDP using the #esp8266
 * It will read up to 20 DS18B20s on the bus (or change MAX_DEVICES)
 * It will deep sleep (30uA current) for 2 minutes (or change SLEEP_TIME) (I also removed the resistor from the power LED for lower current draw)
 * It will broadcast on the local net on UDP port 53535 (or change BROADCAST_PORT)
-* It will use 74880 as the baud rate [bootloader baudrate] (or change MYBAUD) Note that FTDI based serial dongles will just work by specifying 74880, if your terminal program allows it.  No more garbage on boot!
+* It will use 74880 as the baud rate (bootloader baudrate) (or change MYBAUD) Note that FTDI based serial dongles will just work by specifying 74880, if your terminal program allows it.  No more garbage on boot!
 
 You *MUST* connect XPD_DCDC (chip pin #8) to EXT_RSTB (reset) in order for 
 the device to recover from deep sleep mode.
