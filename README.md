@@ -68,3 +68,7 @@ espconn_create result = 0
 28ae3d1b03000071:+28.0
 deep_sleep
 ```
+
+I've included a schematic and pictures for my little hand wired board in the /hardware folder.  Also, I've included a little mod to an FTDI serial dongle so it can power the thing for testing.
+
+ 
