@@ -28,6 +28,7 @@
 extern int ets_uart_printf(const char *fmt, ...);
 extern int ets_sprintf(char *str, const char *fmt, ...);
 #define sleepms(x) os_delay_us(x*1000);
+//#define DSDEBUG 1
 
 uint8_t devices[MAX_DEVICES][8];
 int ndevices = 0;
@@ -56,8 +57,6 @@ void ICACHE_FLASH_ATTR sleeper(void *arg)
 //  initiate a conversion
 void ICACHE_FLASH_ATTR ds18b20p1(void *arg)
 {
-
-
 	os_timer_disarm(&ds18b20_timer);
 
 	if (ndevices < 1)
@@ -68,16 +67,14 @@ void ICACHE_FLASH_ATTR ds18b20p1(void *arg)
 		return;
 	}
 
-
 	// perform the conversion
 	reset();
 	select(devices[curdevice]);
-
 	write(DS1820_CONVERT_T, 1); // perform temperature conversion
 
-	// tell me when its been 1 second, please
+	// tell me when its been 750ms, please
 	os_timer_setfn(&ds18b20_timer, (os_timer_func_t *)ds18b20p2, (void *)0);
-	os_timer_arm(&ds18b20_timer, 1000, 0);
+	os_timer_arm(&ds18b20_timer, 750, 0);
 
 }
 
@@ -94,7 +91,9 @@ void ICACHE_FLASH_ATTR ds18b20p2(void *arg)
 	os_timer_disarm(&ds18b20_timer);
 	while(tries > 0)
 	{
-		//ets_uart_printf("Scratchpad: ");
+#ifdef DSDEBUG
+		ets_uart_printf("Scratchpad: ");
+#endif
 		reset();
 		select(devices[curdevice]);
 		write(DS1820_READ_SCRATCHPAD, 0); // read scratchpad
@@ -102,30 +101,37 @@ void ICACHE_FLASH_ATTR ds18b20p2(void *arg)
 		for(i = 0; i < 9; i++)
 		{
 			data[i] = read();
-			//ets_uart_printf("%2x ", data[i]);
+#ifdef DSDEBUG
+			ets_uart_printf("%02x ", data[i]);
+#endif
 		}
-		//ets_uart_printf("\n");
-		//ets_uart_printf("crc calc=%02x read=%02x\n",crc8(data,8),data[8]);
+#ifdef DSDEBUG
+		ets_uart_printf("\n");
+		ets_uart_printf("crc calc=%02x read=%02x\n",crc8(data,8),data[8]);
+#endif
 		if(crc8(data,8) == data[8]) break;
 		tries--;
 	}
-
-	int HighByte, LowByte, TReading, SignBit, Tc_100, Whole, Fract;
-	LowByte = data[0];
-	HighByte = data[1];
-	TReading = (HighByte << 8) + LowByte;
-	SignBit = TReading & 0x8000;  // test most sig bit
-	if (SignBit) // negative
-		TReading = (TReading ^ 0xffff) + 1; // 2's comp
-
-	Whole = TReading >> 4;  // separate off the whole and fractional portions
-	Fract = (TReading & 0xf) * 100 / 16;
-
 	uint8_t *addr = devices[curdevice];
+	int rr = data[1] << 8 | data[0];
+	if (rr & 0x8000) rr |= 0xffff0000; // sign extend
+	if (addr[0] == 0x10)
+	{
+		//DS18S20
+		rr = rr * 10000 / 2; // each bit is 1/2th of a degree C, * 10000 just keeps us as an integer
+	}
+	else
+	{
+		//DS18B20
+		rr = rr * 10000 / 16; // each bit is 1/16th of a degree C, * 10000 just keeps us as an integer
+	}
+#ifdef DSDEBUG
+	ets_uart_printf("int reading=%d r2=%d.%04d hex=%02x%02x\n",rr,rr/10000,abs(rr)%10000,data[1],data[0]);
+#endif
 	char out[50];
-	ets_sprintf(out,"%02x%02x%02x%02x%02x%02x%02x%02x:%c%d.%d",
+	ets_sprintf(out,"%02x%02x%02x%02x%02x%02x%02x%02x:%d.%04d",
 					addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],
-					SignBit ? '-' : '+', Whole, Fract < 10 ? 0 : Fract);
+					rr/10000,abs(rr)%10000);
 
 	espconn_sent(&bcconn, out,strlen(out));
 	ets_uart_printf("%s\n",out);
